@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Draft Scheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .user-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .user-input-container {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .user-input-container input {
+            padding: 15px 25px;
+            border: 2px solid #ddd;
+            border-radius: 30px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+            min-width: 250px;
+        }
+
+        .user-input-container input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-admin {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .btn-admin:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .current-user {
+            text-align: center;
+            padding: 15px;
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            border-radius: 10px;
+            font-weight: bold;
+            color: #155724;
+            font-size: 1.1em;
+        }
+
+        .instructions {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+            border: 2px solid #ffeaa7;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            color: #856404;
+        }
+
+        .instructions h3 {
+            margin-bottom: 15px;
+            color: #721c24;
+            font-size: 1.3em;
+        }
+
+        .instructions ul {
+            margin-left: 25px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            font-size: 1.05em;
+        }
+
+        .schedule-section {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        .grid-container {
+            min-width: 1200px;
+            display: grid;
+            grid-template-columns: 200px repeat(10, 1fr);
+            gap: 2px;
+            background: #34495e;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .grid-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .time-label {
+            background: #34495e;
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .time-slot {
+            background: white;
+            padding: 15px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            border: 3px solid transparent;
+        }
+
+        .time-slot:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .time-slot.selected {
+            border: 3px solid #2c3e50;
+        }
+
+        .time-slot.yes {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .time-slot.maybe {
+            background: #f1c40f;
+            color: #2c3e50;
+        }
+
+        .time-slot.no {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .legend-color {
+            width: 25px;
+            height: 25px;
+            border-radius: 6px;
+            border: 2px solid #333;
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #e8f4f8;
+            border-radius: 10px;
+            font-size: 1.1em;
+            color: #2c3e50;
+        }
+
+        .admin-section {
+            padding: 30px;
+            background: #2c3e50;
+            color: white;
+        }
+
+        .admin-login {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .admin-input {
+            padding: 12px 20px;
+            border: 2px solid #34495e;
+            border-radius: 25px;
+            font-size: 16px;
+            margin-right: 15px;
+            outline: none;
+        }
+
+        .results-container {
+            display: none;
+        }
+
+        .results-grid {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .results-header {
+            background: #34495e;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-table th {
+            background: #ecf0f1;
+            color: #2c3e50;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 2px solid #bdc3c7;
+        }
+
+        .results-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .results-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .vote-count {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 15px;
+            color: white;
+            margin: 0 2px;
+        }
+
+        .vote-yes { background: #2ecc71; }
+        .vote-maybe { background: #f1c40f; color: #2c3e50; }
+        .vote-no { background: #e74c3c; }
+
+        .recommendation {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .recommendation h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2.2em; }
+            .user-input-container { flex-direction: column; }
+            .legend { flex-direction: column; align-items: center; }
+            .grid-container { min-width: 900px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏈 Fantasy Football Draft Scheduler</h1>
+            <p>August 25 - September 3, 2025 | 4:00-7:00 PM PT</p>
+        </div>
+
+        <div class="user-section">
+            <div class="instructions">
+                <h3>📋 How to Use This Scheduler:</h3>
+                <ul>
+                    <li><strong>Enter your name</strong> and click "Set Name" to begin</li>
+                    <li><strong>Click on a time slot</strong> to select it</li>
+                    <li><strong>Type your availability:</strong>
+                        <ul>
+                            <li>"Y" or "Yes" = Available (Green)</li>
+                            <li>"M" or "Maybe" = Tentative (Yellow)</li>
+                            <li>"N" or "No" = Not Available (Red)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Your responses save automatically</strong> - you can come back anytime</li>
+                </ul>
+            </div>
+            
+            <div class="user-input-container">
+                <input type="text" id="userName" placeholder="Enter your full name" maxlength="50">
+                <button class="btn btn-primary" onclick="setUserName()">Set Name</button>
+            </div>
+            
+            <div id="currentUser" class="current-user" style="display: none;">
+                ✅ Currently editing as: <span id="currentUserName"></span>
+            </div>
+
+            <div class="keyboard-hint">
+                💡 <strong>Tip:</strong> Click on a time slot, then press Y (Yes), M (Maybe), or N (No) on your keyboard
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #2ecc71;"></div>
+                    <span>Yes - Available</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f1c40f;"></div>
+                    <span>Maybe - Tentative</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e74c3c;"></div>
+                    <span>No - Not Available</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: white; border: 2px solid #bdc3c7;"></div>
+                    <span>No Response</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="schedule-section">
+            <div class="grid-container" id="scheduleGrid">
+                <!-- Grid will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <div class="admin-login">
+                <h2>🔒 Admin Access</h2>
+                <p>Enter the admin password to view all responses and recommendations:</p>
+                <br>
+                <input type="password" id="adminPassword" class="admin-input" placeholder="Admin Password">
+                <button class="btn btn-admin" onclick="checkAdminPassword()">View Results</button>
+            </div>
+            
+            <div id="adminResults" class="results-container">
+                <div class="results-grid">
+                    <div class="results-header">
+                        📊 Draft Availability Results
+                    </div>
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Time Slot</th>
+                                <th>Yes Votes</th>
+                                <th>Maybe Votes</th>
+                                <th>No Votes</th>
+                                <th>Total Responses</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <!-- Results will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="recommendation" class="recommendation">
+                    <!-- Recommendation will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const ADMIN_PASSWORD = 'draftmaster2025';
+        
+        // Generate dates from August 25 to September 3, 2025
+        function generateDates() {
+            const dates = [];
+            const startDate = new Date(2025, 7, 25); // August 25, 2025
+            const endDate = new Date(2025, 8, 3);   // September 3, 2025
+            
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                dates.push({
+                    date: new Date(d),
+                    dateStr: d.toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric',
+                        weekday: 'short'
+                    }),
+                    fullDate: d.toISOString().split('T')[0]
+                });
+            }
+            return dates;
+        }
+
+        const timeSlots = ['4:00-5:00 PM', '5:00-6:00 PM', '6:00-7:00 PM'];
+        const dates = generateDates();
+        let currentUser = '';
+        let selectedCell = null;
+
+        // Initialize the grid
+        function initializeGrid() {
+            const grid = document.getElementById('scheduleGrid');
+            grid.innerHTML = '';
+
+            // Header row
+            const headerCell = document.createElement('div');
+            headerCell.className = 'grid-header';
+            headerCell.textContent = 'Time Slots';
+            grid.appendChild(headerCell);
+
+            dates.forEach(dateObj => {
+                const dateCell = document.createElement('div');
+                dateCell.className = 'grid-header';
+                dateCell.textContent = dateObj.dateStr;
+                grid.appendChild(dateCell);
+            });
+
+            // Time slot rows
+            timeSlots.forEach(timeSlot => {
+                const timeCell = document.createElement('div');
+                timeCell.className = 'time-label';
+                timeCell.textContent = timeSlot;
+                grid.appendChild(timeCell);
+
+                dates.forEach(dateObj => {
+                    const cell = document.createElement('div');
+                    cell.className = 'time-slot';
+                    cell.dataset.date = dateObj.fullDate;
+                    cell.dataset.time = timeSlot;
+                    cell.onclick = () => selectCell(cell);
+                    cell.textContent = 'Click to select';
+                    grid.appendChild(cell);
+                });
+            });
+
+            loadUserResponses();
+        }
+
+        // Select a cell
+        function selectCell(cell) {
+            if (!currentUser) {
+                alert('Please enter your name first!');
+                return;
+            }
+
+            // Remove selection from other cells
+            document.querySelectorAll('.time-slot.selected').forEach(c => {
+                c.classList.remove('selected');
+            });
+
+            // Select this cell
+            cell.classList.add('selected');
+            selectedCell = cell;
+            
+            // Update display text
+            if (!cell.dataset.state || cell.dataset.state === '') {
+                cell.textContent = 'Press Y, M, or N';
+            }
+        }
+
+        // Handle keyboard input
+        document.addEventListener('keydown', function(e) {
+            if (!selectedCell || !currentUser) return;
+
+            const key = e.key.toLowerCase();
+            let state = '';
+            let text = '';
+
+            if (key === 'y' || (key === 'e' && e.ctrlKey === false)) {
+                // Check if they're typing "yes"
+                if (e.target.tagName === 'INPUT') return;
+                state = 'yes';
+                text = 'YES';
+            } else if (key === 'm') {
+                if (e.target.tagName === 'INPUT') return;
+                state = 'maybe';
+                text = 'MAYBE';
+            } else if (key === 'n') {
+                if (e.target.tagName === 'INPUT') return;
+                state = 'no';
+                text = 'NO';
+            } else if (key === 'backspace' || key === 'delete') {
+                if (e.target.tagName === 'INPUT') return;
+                e.preventDefault();
+                state = '';
+                text = 'Click to select';
+            } else {
+                return;
+            }
+
+            // Update cell
+            selectedCell.dataset.state = state;
+            selectedCell.className = 'time-slot selected ' + state;
+            selectedCell.textContent = text;
+
+            // Save response
+            saveUserResponse(selectedCell.dataset.date, selectedCell.dataset.time, state);
+        });
+
+        // Set user name
+        function setUserName() {
+            const nameInput = document.getElementById('userName');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert('Please enter a valid name!');
+                return;
+            }
+
+            currentUser = name;
+            document.getElementById('currentUserName').textContent = name;
+            document.getElementById('currentUser').style.display = 'block';
+            
+            loadUserResponses();
+        }
+
+        // Save user response
+        function saveUserResponse(date, time, state) {
+            const key = `draft_v2_${currentUser}`;
+            let userData = JSON.parse(localStorage.getItem(key) || '{}');
+            
+            if (!userData[date]) {
+                userData[date] = {};
+            }
+            
+            if (state === '') {
+                delete userData[date][time];
+                if (Object.keys(userData[date]).length === 0) {
+                    delete userData[date];
+                }
+            } else {
+                userData[date][time] = state;
+            }
+            
+            localStorage.setItem(key, JSON.stringify(userData));
+        }
+
+        // Load user responses
+        function loadUserResponses() {
+            if (!currentUser) return;
+
+            const key = `draft_v2_${currentUser}`;
+            const userData = JSON.parse(localStorage.getItem(key) || '{}');
+
+            // Clear all cells first
+            document.querySelectorAll('.time-slot').forEach(cell => {
+                cell.dataset.state = '';
+                cell.className = 'time-slot';
+                cell.textContent = 'Click to select';
+            });
+
+            // Load saved responses
+            Object.keys(userData).forEach(date => {
+                Object.keys(userData[date]).forEach(time => {
+                    const cell = document.querySelector(`[data-date="${date}"][data-time="${time}"]`);
+                    if (cell) {
+                        const state = userData[date][time];
+                        cell.dataset.state = state;
+                        cell.className = 'time-slot ' + state;
+                        
+                        switch(state) {
+                            case 'yes':
+                                cell.textContent = 'YES';
+                                break;
+                            case 'maybe':
+                                cell.textContent = 'MAYBE';
+                                break;
+                            case 'no':
+                                cell.textContent = 'NO';
+                                break;
+                        }
+                    }
+                });
+            });
+        }
+
+        // Check admin password
+        function checkAdminPassword() {
+            const password = document.getElementById('adminPassword').value;
+            
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('adminResults').style.display = 'block';
+                generateResults();
+            } else {
+                alert('Incorrect password!');
+            }
+        }
+
+        // Generate admin results
+        function generateResults() {
+            const allResponses = {};
+            const timeSlotResults = {};
+
+            // Get all participant responses
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('draft_v2_')) {
+                    const participant = key.replace('draft_v2_', '');
+                    allResponses[participant] = JSON.parse(localStorage.getItem(key));
+                }
+            }
+
+            // Initialize results structure
+            dates.forEach(dateObj => {
+                timeSlots.forEach(timeSlot => {
+                    const slotKey = `${dateObj.fullDate}_${timeSlot}`;
+                    timeSlotResults[slotKey] = {
+                        date: dateObj.dateStr,
+                        time: timeSlot,
+                        yes: 0,
+                        maybe: 0,
+                        no: 0,
+                        total: 0
+                    };
+                });
+            });
+
+            // Count responses
+            Object.keys(allResponses).forEach(participant => {
+                const responses = allResponses[participant];
+                Object.keys(responses).forEach(date => {
+                    Object.keys(responses[date]).forEach(time => {
+                        const slotKey = `${date}_${time}`;
+                        const response = responses[date][time];
+                        
+                        if (timeSlotResults[slotKey]) {
+                            timeSlotResults[slotKey][response]++;
+                            timeSlotResults[slotKey].total++;
+                        }
+                    });
+                });
+            });
+
+            // Populate results table
+            const tableBody = document.getElementById('resultsTableBody');
+            tableBody.innerHTML = '';
+
+            const sortedResults = Object.values(timeSlotResults).sort((a, b) => {
+                // Sort by score (yes votes - no votes), then by yes votes
+                const scoreA = a.yes - a.no;
+                const scoreB = b.yes - b.no;
+                return scoreB - scoreA || b.yes - a.yes;
+            });
+
+            sortedResults.forEach(result => {
+                const row = document.createElement('tr');
+                const score = result.yes - result.no;
+                
+                row.innerHTML = `
+                    <td><strong>${result.date}</strong></td>
+                    <td>${result.time}</td>
+                    <td><span class="vote-count vote-yes">${result.yes}</span></td>
+                    <td><span class="vote-count vote-maybe">${result.maybe}</span></td>
+                    <td><span class="vote-count vote-no">${result.no}</span></td>
+                    <td><strong>${result.total}</strong></td>
+                    <td><strong>${score > 0 ? '+' : ''}${score}</strong></td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+
+            // Generate recommendation
+            const bestSlot = sortedResults[0];
+            const recommendationDiv = document.getElementById('recommendation');
+            
+            if (bestSlot && bestSlot.total > 0) {
+                recommendationDiv.innerHTML = `
+                    <h3>🎯 RECOMMENDED TIME SLOT</h3>
+                    <p><strong>${bestSlot.date} at ${bestSlot.time}</strong></p>
+                    <p>${bestSlot.yes} Yes votes • ${bestSlot.maybe} Maybe votes • ${bestSlot.no} No votes</p>
+                    <p>Score: ${bestSlot.yes - bestSlot.no} (Yes votes minus No votes)</p>
+                `;
+            } else {
+                recommendationDiv.innerHTML = `
+                    <h3>⏳ WAITING FOR RESPONSES</h3>
+                    <p>No responses have been submitted yet.</p>
+                `;
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGrid();
+            
+            // Focus name input
+            document.getElementById('userName').focus();
+            
+            // Enter key to set name
+            document.getElementById('userName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    setUserName();
+                }
+            });
+
+            // Enter key for admin password
+            document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkAdminPassword();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
